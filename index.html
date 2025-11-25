@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小桌子故事</title>
+    <title>球拍故事</title>
     <style>
         /* 基础样式和字体设置 */
         body {
@@ -13,7 +13,7 @@
             background-color: #f0f0f0; /* 模拟外部灰色背景 */
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* 顶部对齐内容 */
+            align-items: center; /* **主要修改：垂直居中内容** */
             min-height: 100vh;
         }
 
@@ -21,38 +21,41 @@
         .screen-container {
             width: 100%;
             max-width: 400px; /* 模拟手机的宽度限制 */
-            min-height: 100vh;
+            /* 移除 min-height: 100vh; 让其根据内容高度自适应，但如果内容少，可以保持100vh */
+            min-height: 50vh; /* 调整为最小高度 */
             background-color: white;
             padding: 0;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             position: relative;
-            overflow: hidden; /* 确保内容不会溢出 */
+            overflow: hidden;
+            display: flex; /* 启用 flex 布局来居中页面内容 */
+            flex-direction: column;
+            justify-content: center; /* 确保 Page 内容在 container 中居中 */
         }
 
         /* 页面内容样式 */
         .page {
-            position: absolute;
-            top: 0;
-            left: 0;
+            position: relative; /* 调整为 relative，以便在居中布局中工作 */
             width: 100%;
-            min-height: 100vh;
+            /* 移除 min-height: 100vh; */
             padding: 30px;
             box-sizing: border-box;
-            transition: opacity 1s ease-in-out; /* 页面切换时的过渡效果 */
+            transition: opacity 1s ease-in-out;
+            text-align: center; /* **新增：文本内容居中** */
         }
 
         /* 元素渐显样式 */
         .fade-in-element {
             opacity: 0;
-            transition: opacity 2s ease-in-out; /* 渐显动画 */
+            transition: opacity 2s ease-in-out;
             margin-bottom: 20px;
-            font-size: 18px; /* 统一字体大小 */
+            font-size: 18px;
             line-height: 1.5;
         }
         
         /* 延迟渐显的类 */
-        .delay-1 { transition-delay: 0.5s; }
-        .delay-2 { transition-delay: 1.5s; }
+        .delay-1 { transition-delay: 1.0s; } /* 稍微延长延迟 */
+        .delay-2 { transition-delay: 2.0s; }
 
         /* 图片样式 */
         .content-image {
@@ -80,7 +83,7 @@
             border: 1px solid #ccc;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 18px; /* 统一字体大小 */
+            font-size: 18px;
             transition: background-color 0.2s, opacity 0.5s;
         }
 
@@ -88,16 +91,20 @@
             background-color: #eee;
         }
         
-        /* 隐藏第二个页面 */
-        #page2 {
-            opacity: 0;
-            pointer-events: none; /* 隐藏时禁用交互 */
-        }
-        
-        /* 隐藏第三个页面 */
-        #page3 {
+        /* 隐藏和显示页面的关键样式 */
+        .page {
+            position: absolute;
+            top: 50%; /* 垂直定位到中间 */
+            transform: translateY(-50%); /* 向上移动自身高度的一半 */
+            left: 0;
             opacity: 0;
             pointer-events: none;
+            min-height: auto; /* 移除最小高度限制 */
+        }
+        
+        #page1 {
+            opacity: 1; /* Page 1 初始显示 */
+            pointer-events: auto;
         }
 
     </style>
@@ -109,10 +116,9 @@
     <div id="page1" class="page">
         <p class="fade-in-element">Hi, stranger!</p>
         
-        <p class="fade-in-element delay-1">This is a small IKEA side table that I’ve used for two years. I liked keeping my teapot and coffee beans on it.</p>
+        <p class="fade-in-element delay-1">This is the badminton racket I used in Delft.</p>
         
-        <div class="fade-in-element delay-2">
-                        </div>
+        <p class="fade-in-element delay-2">I often played at X, and this racket has been with me for many good sessions.</p>
         
         <div class="button-container">
             <button class="action-button fade-in-element delay-2" onclick="showPage2()">继续</button>
@@ -120,10 +126,10 @@
         
     </div>
 
-    <div id="page2" class="page" style="display: none;">
-        <p class="fade-in-element">Hi, stranger!</p>
+    <div id="page2" class="page">
+        <p class="fade-in-element">Since I’m leaving, I’m putting it here in case someone who needs it can give it a new life.</p>
         
-        <p class="fade-in-element delay-1">The previous owner is just wondering whether this little table has found a new home.</p>
+        <p class="fade-in-element delay-1">I'm just wondering whether this little racket has found a new home.</p>
         
         <div class="button-container">
             <button class="action-button fade-in-element delay-2" onclick="showPage3()">Yes, I picked it up.</button>
@@ -131,22 +137,21 @@
         </div>
     </div>
     
-    <div id="page3" class="page" style="display: none;">
-        <p class="fade-in-element">Thanks,</p>
-        <p class="fade-in-element delay-1">Have a nice day!</p>
+    <div id="page3" class="page">
+        <p class="fade-in-element">Thanks for picking up my racket.</p>
+        <p class="fade-in-element delay-1">Hope you have fun with it!</p>
     </div>
 
 </div>
 
 <script>
+    // **注意：由于修改了 CSS，这里的 JS 逻辑也需要微调**
+
     // 页面加载完成后立即启动 Page 1 的渐显动画
     window.onload = function() {
-        // 选中 Page 1 的所有渐显元素
         const page1Elements = document.querySelectorAll('#page1 .fade-in-element');
-        
-        // 遍历并设置 opacity: 1 来触发 CSS 动画
         page1Elements.forEach(el => {
-            el.style.opacity = 1;
+            el.style.opacity = 1; // 触发 CSS 动画
         });
     };
 
@@ -155,13 +160,12 @@
         const page1 = document.getElementById('page1');
         const page2 = document.getElementById('page2');
         
-        // 1. 隐藏 Page 1 (即刻隐藏，或使用渐出效果)
+        // 1. 隐藏 Page 1 
         page1.style.opacity = 0;
-        page1.style.pointerEvents = 'none'; // 禁用点击
+        page1.style.pointerEvents = 'none';
         
         // 2. 延迟显示 Page 2 的容器，并触发其内容渐显
         setTimeout(() => {
-            page2.style.display = 'block'; // 让 Page 2 容器可见
             page2.style.opacity = 1; // 页面容器渐显
             page2.style.pointerEvents = 'auto'; // 启用点击
             
@@ -171,7 +175,6 @@
                 el.style.opacity = 1;
             });
 
-            page1.style.display = 'none'; // 完全隐藏 Page 1
         }, 500); // 500ms 延迟，给 Page 1 渐出时间
     }
     
@@ -186,7 +189,6 @@
         
         // 2. 延迟显示 Page 3
         setTimeout(() => {
-            page3.style.display = 'block';
             page3.style.opacity = 1;
             page3.style.pointerEvents = 'auto';
             
@@ -195,8 +197,6 @@
             page3Elements.forEach(el => {
                 el.style.opacity = 1;
             });
-            
-            page2.style.display = 'none';
         }, 500);
     }
 </script>
