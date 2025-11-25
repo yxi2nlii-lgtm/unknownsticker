@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小桌子故事</title>
+    <style>
+        /* 基础样式和字体设置 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0; /* 模拟外部灰色背景 */
+            display: flex;
+            justify-content: center;
+            align-items: flex-start; /* 顶部对齐内容 */
+            min-height: 100vh;
+        }
+
+        /* 模拟手机屏幕/白底区域 */
+        .screen-container {
+            width: 100%;
+            max-width: 400px; /* 模拟手机的宽度限制 */
+            min-height: 100vh;
+            background-color: white;
+            padding: 0;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden; /* 确保内容不会溢出 */
+        }
+
+        /* 页面内容样式 */
+        .page {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            min-height: 100vh;
+            padding: 30px;
+            box-sizing: border-box;
+            transition: opacity 1s ease-in-out; /* 页面切换时的过渡效果 */
+        }
+
+        /* 元素渐显样式 */
+        .fade-in-element {
+            opacity: 0;
+            transition: opacity 2s ease-in-out; /* 渐显动画 */
+            margin-bottom: 20px;
+            font-size: 18px; /* 统一字体大小 */
+            line-height: 1.5;
+        }
+        
+        /* 延迟渐显的类 */
+        .delay-1 { transition-delay: 0.5s; }
+        .delay-2 { transition-delay: 1.5s; }
+
+        /* 图片样式 */
+        .content-image {
+            max-width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        /* 按钮容器和样式 */
+        .button-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            align-items: center;
+            margin-top: 40px;
+        }
+
+        .action-button {
+            width: 80%;
+            padding: 12px 20px;
+            background-color: white;
+            color: black;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px; /* 统一字体大小 */
+            transition: background-color 0.2s, opacity 0.5s;
+        }
+
+        .action-button:hover {
+            background-color: #eee;
+        }
+        
+        /* 隐藏第二个页面 */
+        #page2 {
+            opacity: 0;
+            pointer-events: none; /* 隐藏时禁用交互 */
+        }
+        
+        /* 隐藏第三个页面 */
+        #page3 {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="screen-container">
+
+    <div id="page1" class="page">
+        <p class="fade-in-element">Hi, stranger!</p>
+        
+        <p class="fade-in-element delay-1">This is a small IKEA side table that I’ve used for two years. I liked keeping my teapot and coffee beans on it.</p>
+        
+        <div class="fade-in-element delay-2">
+                        </div>
+        
+        <div class="button-container">
+            <button class="action-button fade-in-element delay-2" onclick="showPage2()">继续</button>
+        </div>
+        
+    </div>
+
+    <div id="page2" class="page" style="display: none;">
+        <p class="fade-in-element">Hi, stranger!</p>
+        
+        <p class="fade-in-element delay-1">The previous owner is just wondering whether this little table has found a new home.</p>
+        
+        <div class="button-container">
+            <button class="action-button fade-in-element delay-2" onclick="showPage3()">Yes, I picked it up.</button>
+            <button class="action-button fade-in-element delay-2" onclick="alert('Thank you for letting me know!');">No</button>
+        </div>
+    </div>
+    
+    <div id="page3" class="page" style="display: none;">
+        <p class="fade-in-element">Thanks,</p>
+        <p class="fade-in-element delay-1">Have a nice day!</p>
+    </div>
+
+</div>
+
+<script>
+    // 页面加载完成后立即启动 Page 1 的渐显动画
+    window.onload = function() {
+        // 选中 Page 1 的所有渐显元素
+        const page1Elements = document.querySelectorAll('#page1 .fade-in-element');
+        
+        // 遍历并设置 opacity: 1 来触发 CSS 动画
+        page1Elements.forEach(el => {
+            el.style.opacity = 1;
+        });
+    };
+
+    // 切换到 Page 2 的函数
+    function showPage2() {
+        const page1 = document.getElementById('page1');
+        const page2 = document.getElementById('page2');
+        
+        // 1. 隐藏 Page 1 (即刻隐藏，或使用渐出效果)
+        page1.style.opacity = 0;
+        page1.style.pointerEvents = 'none'; // 禁用点击
+        
+        // 2. 延迟显示 Page 2 的容器，并触发其内容渐显
+        setTimeout(() => {
+            page2.style.display = 'block'; // 让 Page 2 容器可见
+            page2.style.opacity = 1; // 页面容器渐显
+            page2.style.pointerEvents = 'auto'; // 启用点击
+            
+            // 触发 Page 2 内容的渐显
+            const page2Elements = document.querySelectorAll('#page2 .fade-in-element');
+            page2Elements.forEach(el => {
+                el.style.opacity = 1;
+            });
+
+            page1.style.display = 'none'; // 完全隐藏 Page 1
+        }, 500); // 500ms 延迟，给 Page 1 渐出时间
+    }
+    
+    // 切换到 Page 3 的函数
+    function showPage3() {
+        const page2 = document.getElementById('page2');
+        const page3 = document.getElementById('page3');
+        
+        // 1. 隐藏 Page 2
+        page2.style.opacity = 0;
+        page2.style.pointerEvents = 'none';
+        
+        // 2. 延迟显示 Page 3
+        setTimeout(() => {
+            page3.style.display = 'block';
+            page3.style.opacity = 1;
+            page3.style.pointerEvents = 'auto';
+            
+            // 触发 Page 3 内容的渐显
+            const page3Elements = document.querySelectorAll('#page3 .fade-in-element');
+            page3Elements.forEach(el => {
+                el.style.opacity = 1;
+            });
+            
+            page2.style.display = 'none';
+        }, 500);
+    }
+</script>
+
+</body>
+</html>
