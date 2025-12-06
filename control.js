@@ -9,7 +9,7 @@ const VIRTUAL_PIN = 'v1';
 // 舵机转到最大角度（拾取）
 const PICKUP_ANGLE = 90;
 // 舵机返回初始角度（返回）
-const RETURN_ANGLE = 0;
+// const RETURN_ANGLE = 0;
 
 
 /**
@@ -48,7 +48,7 @@ document.getElementById('pickUpButton').addEventListener('click', () => {
     sendCommand(PICKUP_ANGLE); 
 });
 
-// 2. "Return" 按钮：发送 0 度指令
-document.getElementById('returnButton').addEventListener('click', () => {
-    sendCommand(RETURN_ANGLE); 
-});
+// 2. !!! 移除 "Return" 按钮的事件监听器，因为动作由 ESP32 自动完成 !!!
+// document.getElementById('returnButton').addEventListener('click', () => {
+//     sendCommand(RETURN_ANGLE);  
+// });
