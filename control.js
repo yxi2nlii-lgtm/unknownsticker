@@ -5,7 +5,7 @@ const AUTH_TOKEN = 'OqSFS2EppKQRi0DYBOTFNEQgW7pljRjT';
 // Blynk 的服务器地址
 const BLYNK_HOST = 'blynk.cloud'; 
 // 您在 ESP32 代码中设置的虚拟引脚
-const VIRTUAL_PIN = 'v1'; 
+const VIRTUAL_PIN = 'V1'; 
 // 舵机转到最大角度（拾取）
 const PICKUP_ANGLE = 180;
 // 舵机返回初始角度（返回）
