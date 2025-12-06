@@ -6,7 +6,7 @@ const BLYNK_HOST = 'blynk.cloud'; 
 // 您在 ESP32 代码中设置的虚拟引脚
 const VIRTUAL_PIN = 'v1'; 
 // 舵机转到最大角度（拾取）
-const PICKUP_ANGLE = 90;
+const PICKUP_ANGLE = 120;
 // 舵机返回初始角度（重置云端状态）
 const RETURN_ANGLE = 0; // 必须重新定义并使用！
 
