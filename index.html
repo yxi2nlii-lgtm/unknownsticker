@@ -1,35 +1,392 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-CN">
 <head>
-    <title>自定义舵机拾取控制</title>
-    <style>
-        /* 简单美化样式 */
-        body { font-family: sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f4; }
-        .control-button {
-            font-size: 40px;
-            padding: 30px 60px;
-            background-color: #4CAF50; /* 绿色 */
-            color: white;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            margin: 10px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-        }
-        
-        #status { margin-top: 30px; font-weight: bold; }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>动态表情 - 状态记忆与柔和阴影</title>
+    <style>
+        /* 统一线条粗细变量 */
+        :root {
+            --line-thickness: 10px;
+            --eye-height: 35px;
+            /* 初始颜色：完全透明 */
+            --face-color: transparent; 
+            --max-move-distance: 30px; 
+            --max-squeeze-scale: 0.90; 
+            --max-stretch-scale: 1.05;
+            --face-shift-ratio: 0.15; 
+            --face-padding: 50px; 
+        }
+        
+        /* 1. 页面整体样式 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%; 
+            display: flex; 
+            justify-content: center;
+            align-items: center;
+            /* 背景色设置为白色 */
+            background-color: #FFFFFF; 
+            padding: var(--face-padding);
+            box-sizing: border-box; 
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        /* 2. 表情容器 (大圆脸) */
+        .emoji-container {
+            width: 80vw; 
+            max-width: 300px; 
+            height: auto; 
+            aspect-ratio: 1 / 1; 
+            
+            background-color: var(--face-color); /* 初始透明 */
+            
+            border-radius: 50%; 
+            position: relative;
+            box-shadow: none; /* 初始无阴影，由JS动态设置 */
+            cursor: pointer;
+            
+            /* 为颜色变化和透明度变化添加过渡效果 */
+            transition: transform 0.1s ease-out, box-shadow 0.1s ease-out, background-color 0.5s ease; 
+            overflow: hidden; 
+        }
+
+        /* 3. 五官容器 (内部移动层) */
+        .features-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.1s ease-out; 
+            opacity: 1; 
+        }
+
+        /* 4. 眼睛和嘴巴的通用样式 */
+        .eye, .mouth {
+            position: absolute;
+            background-color: black;
+        }
+
+        /* 5. 眼睛、嘴巴、眨眼动画等样式 (保持不变) */
+        .eye {
+            width: var(--line-thickness); 
+            height: var(--eye-height); 
+            top: 35%; 
+            animation: blink 4s infinite; 
+        }
+
+        .left-eye {
+            left: 35%;
+            transform: translateX(-50%);
+        }
+
+        .right-eye {
+            right: 35%;
+            transform: translateX(50%);
+        }
+
+        .mouth {
+            width: 80px;
+            height: 80px;
+            border: var(--line-thickness) solid black; 
+            border-color: transparent transparent black transparent; 
+            border-radius: 50%;
+            bottom: 25%;
+            right: 30%; 
+            transform: rotate(-45deg); 
+            background-color: transparent; 
+        }
+        
+        @keyframes blink {
+            0%, 45%, 100% {
+                height: var(--eye-height);
+                transform: translateX(-50%); 
+            }
+            50%, 52% {
+                height: var(--line-thickness);
+                transform: translate(-50%, calc((var(--eye-height) - var(--line-thickness)) / 2));
+            }
+        }
+        
+        @keyframes shake {
+            0% { transform: scale(1.0); }
+            50% { transform: scale(0.98); } 
+            100% { transform: scale(1.0); } 
+        }
+        
+        .click-shake {
+            animation: shake 0.2s ease-in-out; 
+        }
+    </style>
 </head>
 <body>
-    <h2>远程舵机控制</h2>
-
-    <button id="pickUpButton" class="control-button">I pick it up</button>
-    <br><br>
+    <div style="position: absolute; top: 10px; color: #555; font-size: 14px;" id="blynk-status">Blynk Status: Idle</div>
     
-    <button id="returnButton" class="return-button">Return to Base (0°)</button>
+    <div class="emoji-container" id="emojiContainer">
+        <div class="features-wrapper" id="featuresWrapper">
+            <div class="eye left-eye"></div>
+            <div class="eye right-eye"></div>
+            <div class="mouth"></div>
+        </div>
+    </div>
+    
+    <script>
+        const container = document.getElementById('emojiContainer');
+        const wrapper = document.getElementById('featuresWrapper');
+        const root = document.documentElement; 
+        const blynkStatusElement = document.getElementById('blynk-status');
 
-    <p id="status">Status: Ready</p>
+        // --- Blynk API 和状态常量 ---
+        // 🚨 确保以下三个常量与您的ESP32配置一致 🚨
+        const AUTH_TOKEN = 'OqSFS2EppKQRi0DYBOTFNEQgW7pljRjT'; 
+        const BLYNK_HOST = 'blynk.cloud'; 
+        const VIRTUAL_PIN = 'v1'; 
+        const PICKUP_ANGLE = 120; // 舵机目标角度
+        const RETURN_ANGLE = 0; // 重置云端状态角度
 
-    <script src="control.js"></script>
+        // --- 颜色和表情状态常量 ---
+        const TARGET_HUE = 0;           
+        const TARGET_SATURATION = 100;  
+        const TARGET_LIGHTNESS = 70;    
+
+        const MAX_CLICKS = 10;      
+        const DECAY_DURATION_SEC = 30; 
+        const DECAY_RATE_PER_SEC = MAX_CLICKS / DECAY_DURATION_SEC; 
+
+        // --- 状态变量 ---
+        let clickCount = 0; 
+        let decayInterval = null; 
+        
+        // --- 移动和聚拢常量 (从CSS获取) ---
+        const maxDistance = parseFloat(getComputedStyle(root).getPropertyValue('--max-move-distance')) || 30;
+        const maxSqueezeScale = parseFloat(getComputedStyle(root).getPropertyValue('--max-squeeze-scale')) || 0.90;
+        const maxStretchScale = parseFloat(getComputedStyle(root).getPropertyValue('--max-stretch-scale')) || 1.05;
+        const faceShiftRatio = parseFloat(getComputedStyle(root).getPropertyValue('--face-shift-ratio')) || 0.15;
+
+
+        // --- 状态存储函数 ---
+        function saveState() {
+            localStorage.setItem('emojiClickCount', clickCount);
+            localStorage.setItem('emojiLastUpdateTime', Date.now());
+        }
+
+
+        // --- 颜色逻辑函数 ---
+        function updateColor() {
+            const progress = clickCount / MAX_CLICKS; // 0 到 1
+
+            const currentSaturation = Math.round(TARGET_SATURATION * progress);
+            const currentLightness = Math.round(100 - (100 - TARGET_LIGHTNESS) * progress);
+
+            if (progress === 0) {
+                root.style.setProperty('--face-color', 'transparent');
+                container.style.boxShadow = 'none'; 
+            } else {
+                const hslColor = `hsl(${TARGET_HUE}, ${currentSaturation}%, ${currentLightness}%)`;
+                root.style.setProperty('--face-color', hslColor);
+                
+                // 调整阴影参数，使其更模糊、柔和
+                const shadowOffsetY = 4 * progress; // 垂直偏移量
+                const shadowBlur = 15 + 10 * progress; // 模糊半径，从15到25
+                const shadowSpread = 0; // 扩散半径保持0或很小
+                const shadowOpacity = 0.1 + 0.2 * progress; // 透明度从0.1到0.3
+
+                container.style.boxShadow = `0 ${shadowOffsetY}px ${shadowBlur}px ${shadowSpread}px rgba(0, 0, 0, ${shadowOpacity})`; 
+            }
+        }
+
+        // 衰减逻辑，每秒运行一次
+        function updateDecay() {
+            if (clickCount <= 0) {
+                clickCount = 0; 
+                clearInterval(decayInterval);
+                decayInterval = null;
+                updateColor(); 
+                saveState(); 
+                return;
+            }
+
+            const stepsToDecay = 1 * DECAY_RATE_PER_SEC; 
+
+            clickCount = Math.max(0, clickCount - stepsToDecay);
+            
+            updateColor();
+            saveState(); 
+        }
+
+        // --- Blynk API 逻辑函数 (核心修改) ---
+        /**
+         * 构造并发送 HTTP GET 请求到 Blynk API，并立即重置云端状态
+         * @param {number} value 要设置的舵机角度 (应为 120)
+         */
+        async function sendCommand(value) { 
+            // 构造 PUSH URL (发送 120 度)
+            const url_push = `https://${BLYNK_HOST}/external/api/update?token=${AUTH_TOKEN}&${VIRTUAL_PIN}=${value}`;
+            
+            // 构造 RESET URL (发送 0 度，重置云端状态)
+            const url_reset = `https://${BLYNK_HOST}/external/api/update?token=${AUTH_TOKEN}&${VIRTUAL_PIN}=${RETURN_ANGLE}`;
+
+            blynkStatusElement.innerText = `Blynk Status: Sending ${value} degrees...`;
+
+            try {
+                // 1. 发送 PUSH 命令 (120度)
+                let response_push = await fetch(url_push);
+                
+                if (!response_push.ok) {
+                    blynkStatusElement.innerText = `Blynk Status: PUSH Failed! (Code: ${response_push.status})`;
+                    console.error('PUSH API request failed:', response_push.statusText);
+                    return; 
+                }
+                blynkStatusElement.innerText = `Blynk Status: PUSH Success. Resetting cloud...`;
+
+                // 2. 发送 RESET 命令 (0度) 以重置云端 V1 状态
+                let response_reset = await fetch(url_reset);
+
+                if (response_reset.ok) {
+                    blynkStatusElement.innerText = `Blynk Status: Command ${value}° Sent & Cloud Reset Successfully!`;
+                    console.log(`Command ${value} sent, and cloud state successfully reset to 0.`);
+                } else {
+                     blynkStatusElement.innerText = `Blynk Status: PUSH Success, but RESET Failed! (Code: ${response_reset.status})`;
+                    console.error('RESET API request failed:', response_reset.statusText);
+                }
+
+            } catch (error) {
+                blynkStatusElement.innerText = `Blynk Status: Network Error! Could not reach Blynk.`;
+                console.error('Network error:', error);
+            }
+        }
+
+
+        // --- 事件处理函数 (已修改) ---
+        function handleClickEffect(event) {
+            event.preventDefault(); // 阻止默认的触摸行为
+
+            // 1. 触发 Blynk 舵机动作
+            sendCommand(PICKUP_ANGLE); // 发送 120度 指令
+            
+            // 2. 触发表情摇晃动画
+            container.classList.remove('click-shake');
+            void container.offsetWidth; 
+            container.classList.add('click-shake');
+            
+            // 3. 更新颜色和状态记忆
+            clickCount = Math.min(MAX_CLICKS, clickCount + 1);
+            updateColor();
+            saveState(); 
+            
+            if (!decayInterval) {
+                decayInterval = setInterval(updateDecay, 1000); 
+            }
+        }
+        
+        // 统一处理五官位移和聚拢 (mousemove/touchmove)
+        function handleInteraction(event) {
+            event.preventDefault();
+
+            container.classList.remove('click-shake');
+            
+            const clientX = event.clientX || (event.touches ? event.touches[0].clientX : event.clientX);
+            const clientY = event.clientY || (event.touches ? event.touches[0].clientY : event.clientX);
+            
+            if (clientX === undefined || clientY === undefined) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const containerCenterX = containerRect.left + containerRect.width / 2;
+            const containerCenterY = containerRect.top + containerRect.height / 2;
+            
+            let dx = clientX - containerCenterX;
+            let dy = clientY - containerCenterY;
+
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            let moveX = dx;
+            let moveY = dy;
+            
+            if (distance > maxDistance) {
+                const ratio = maxDistance / distance;
+                moveX = dx * ratio;
+                moveY = dy * ratio;
+            }
+
+            const faceMoveX = moveX * -faceShiftRatio; 
+            const faceMoveY = moveY * -faceShiftRatio; 
+            
+            container.style.transform = `translate(${faceMoveX}px, ${faceMoveY}px)`;
+            
+            
+            const maxAbsMove = Math.max(Math.abs(moveX), Math.abs(moveY)); 
+            
+            let scaleX = 1;
+            if (Math.abs(moveX) > Math.abs(moveY)) {
+                const horizontalRatio = Math.abs(moveX) / maxDistance;
+                scaleX = 1 - (1 - maxSqueezeScale) * horizontalRatio; 
+            } else if (Math.abs(moveY) > 0.01) {
+                const verticalRatio = Math.abs(moveY) / maxDistance;
+                scaleX = 1 + (maxStretchScale - 1) * verticalRatio;
+            }
+
+            let scaleY = 1;
+            if (Math.abs(moveY) > Math.abs(moveX)) {
+                const verticalRatio = Math.abs(moveY) / maxDistance;
+                scaleY = 1 - (1 - maxSqueezeScale) * verticalRatio; 
+            } else if (Math.abs(moveX) > 0.01) {
+                const horizontalRatio = Math.abs(moveX) / maxDistance;
+                scaleY = 1 + (maxStretchScale - 1) * horizontalRatio;
+            }
+            
+            wrapper.style.transform = `translate(${moveX}px, ${moveY}px) scaleX(${scaleX}) scaleY(${scaleY})`;
+        }
+
+        // --- 复位函数 ---
+        function resetPosition() {
+             wrapper.style.transform = 'translate(0, 0) scaleX(1) scaleY(1)';
+             container.style.transform = 'translate(0, 0)';
+             container.classList.remove('click-shake');
+        }
+
+        // --- 状态初始化逻辑（网页加载时执行） ---
+        function initializeState() {
+            const savedCount = localStorage.getItem('emojiClickCount');
+            const lastUpdate = localStorage.getItem('emojiLastUpdateTime');
+            const currentTime = Date.now();
+
+            if (savedCount && lastUpdate) {
+                let initialCount = parseFloat(savedCount);
+                const elapsedMs = currentTime - parseInt(lastUpdate);
+                const elapsedSec = elapsedMs / 1000;
+
+                const decayAmount = elapsedSec * DECAY_RATE_PER_SEC;
+                
+                clickCount = Math.max(0, initialCount - decayAmount);
+            } else {
+                clickCount = 0;
+            }
+
+            updateColor(); 
+
+            if (clickCount > 0) {
+                decayInterval = setInterval(updateDecay, 1000); 
+            }
+        }
+
+        // --- 启动 ---
+        initializeState(); 
+
+        // 绑定事件：
+        document.addEventListener('mousemove', handleInteraction);
+        document.addEventListener('touchmove', handleInteraction);
+        
+        container.addEventListener('click', handleClickEffect);
+        container.addEventListener('touchstart', handleClickEffect); 
+
+        document.addEventListener('mouseup', resetPosition);
+        document.addEventListener('touchend', resetPosition);
+        document.addEventListener('touchcancel', resetPosition);
+        container.addEventListener('contextmenu', (e) => e.preventDefault()); 
+
+    </script>
 </body>
 </html>
