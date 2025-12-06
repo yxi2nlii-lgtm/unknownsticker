@@ -36,16 +36,23 @@
             font-family: sans-serif;
         }
 
+        /* Blynk 状态提示：底部、小字号、不显眼 */
         #blynk-status {
-            color: #555;
-            font-size: 14px;
-            margin-bottom: 24px;
+            position: fixed;
+            bottom: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 11px;
+            color: #777;
+            opacity: 0.8;
+            pointer-events: none; /* 不挡点击 */
         }
 
-        /* 2. 表情容器 (大圆脸 = 按钮本体) */
+        /* 2. 表情容器 (大圆脸 = 按钮本体) 
+           ⚠ 已缩小：65vw & max-width 260px */
         .emoji-container {
-            width: 80vw; 
-            max-width: 300px; 
+            width: 65vw;        
+            max-width: 260px;    
             height: auto; 
             aspect-ratio: 1 / 1; 
             
@@ -109,7 +116,7 @@
             background-color: transparent; 
         }
         
-        /* 眨眼动画（你原来的） */
+        /* 眨眼动画 */
         @keyframes blink {
             0%, 45%, 100% {
                 height: var(--eye-height);
@@ -156,7 +163,7 @@
         const RETURN_ANGLE = 0;
         /* ============================== */
 
-        // --- 颜色和状态常量（你的表情逻辑） ---
+        // --- 颜色和状态常量（表情逻辑） ---
         const TARGET_HUE        = 0;    // 红色系
         const TARGET_SATURATION = 100;  
         const TARGET_LIGHTNESS  = 70;   
@@ -287,7 +294,7 @@
             const clientY = event.clientY || (event.touches ? event.touches[0].clientY : undefined);
             if (clientX === undefined || clientY === undefined) return;
 
-            const containerRect   = container.getBoundingClientRect();
+            const containerRect    = container.getBoundingClientRect();
             const containerCenterX = containerRect.left + containerRect.width / 2;
             const containerCenterY = containerRect.top + containerRect.height / 2;
             
