@@ -1,6 +1,6 @@
 // --- 替换为您的密钥信息 ---
 // 🚨 必须替换为您在 ESP32 代码中使用的相同的 BLYNK_AUTH_TOKEN 🚨
-const AUTH_TOKEN = 'OqSFS2EppKQRi0DYBOTFNEQgW7pljRjT'; 
+const AUTH_TOKEN = '7QlEXnn6dkKwux5bd3Kplv4ge4Wc_UsZ'; 
 
 // Blynk 的服务器地址
 const BLYNK_HOST = 'blynk.cloud'; 
