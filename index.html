@@ -54,7 +54,7 @@
             overflow: hidden; 
         }
 
-      /* 3. 五官容器 (内部移动层) */
+        /* 3. 五官容器 (内部移动层) */
         .features-wrapper {
             position: absolute;
             top: 0;
@@ -235,22 +235,19 @@
             saveState(); 
         }
 
-        // --- 事件处理函数 ---
+        // --- 事件处理函数（已改：每次点击都发 90°） ---
         function handleClickEffect(event) {
             container.classList.remove('click-shake');
             void container.offsetWidth; 
             container.classList.add('click-shake');
 
-            const wasZero = (clickCount <= 0);   // 之前是否是 0
-
+            // 每次点击都增加颜色记忆
             clickCount = Math.min(MAX_CLICKS, clickCount + 1);
             updateColor();
             saveState(); 
             
-            // 👉 只在从 0 变成有颜色的第一次点击时，发一次 90°
-            if (wasZero) {
-                sendCommand(PICKUP_ANGLE);
-            }
+            // ⭐ 每一次点击都给 Blynk 发送 90°
+            sendCommand(PICKUP_ANGLE);
 
             if (!decayInterval) {
                 decayInterval = setInterval(updateDecay, 1000); 
