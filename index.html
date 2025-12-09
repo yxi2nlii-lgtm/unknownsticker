@@ -3,21 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pink Sticker — 90°</title>
+    <title>Pink Sticker — 90 Degrees</title>
 
     <style>
         :root {
             --line-thickness: 10px;
-            --eye-height: 35px;
-            --face-color: transparent;
-            --max-move-distance: 30px;
-            --max-squeeze-scale: 0.90;
+            --max-move-distance: 30px; 
+            --max-squeeze-scale: 0.90; 
             --max-stretch-scale: 1.05;
             --face-shift-ratio: 0.15; 
-            --face-padding: 50px; 
+            --face-padding: 40px; 
         }
 
-        body, html {
+        html, body {
             margin: 0;
             padding: 0;
             height: 100%;
@@ -26,59 +24,101 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #FFE4EF;  /* 🌸 Pink 背景 */
-            padding: var(--face-padding);
-            box-sizing: border-box;
-            position: relative;
-            overflow: hidden;
+            background: #FFE4EC;   /* 粉色背景 */
             font-family: sans-serif;
         }
 
-        #blynk-status {
-            position: fixed;
-            bottom: 8px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 11px;
-            color: #444;
-            opacity: 0.8;
-            pointer-events: none;
+        .text-area {
+            width: 100%;
+            text-align: center;
+            margin-bottom: 18px;
+            min-height: 90px;
+        }
+
+        .story-line {
+            opacity: 0;
+            margin: 4px 0;
+            font-size: 15px;
+            transition: opacity 0.6s ease;
+        }
+        .story-line.visible {
+            opacity: 1;
         }
 
         .emoji-container {
-            width: 65vw;        
-            max-width: 260px;    
-            aspect-ratio: 1 / 1;
-            background-color: var(--face-color);
-            border-radius: 50%;
+            width: 65vw;
+            max-width: 240px;
+            aspect-ratio: 1/1;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            transition: transform 0.1s ease-out,
-                        box-shadow 0.1s ease-out,
-                        background-color 0.5s ease;
-            overflow: hidden;
+        }
+
+        .big-circle {
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: #FFB7CE;
+            box-shadow: 0 8px 18px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.25s ease;
         }
 
         .features-wrapper {
             position: absolute;
-            top: 0; left: 0;
-            width: 100%; height: 100%;
+            inset: 0;
             transition: transform 0.1s ease-out;
         }
 
+        /* 问号 */
+        #questionFace { display: block; }
+        #smileFace { display: none; }
+
+        .question-arc {
+            position: absolute;
+            width: 90px;
+            height: 90px;
+            border: var(--line-thickness) solid #000;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            top: 22%;
+            left: 50%;
+            transform: translateX(-50%) rotate(40deg);
+        }
+        .question-stem {
+            position: absolute;
+            width: var(--line-thickness);
+            height: 30px;
+            background: #000;
+            top: 58%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .question-dot {
+            position: absolute;
+            width: var(--line-thickness);
+            height: var(--line-thickness);
+            background: #000;
+            top: 73%;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 笑脸 */
         .eye, .mouth {
             position: absolute;
-            background-color: black;
+            background: #000;
         }
-
         .eye {
             width: var(--line-thickness);
-            height: var(--eye-height);
-            top: 35%;
-            animation: blink 4s infinite;
+            height: 30px;
+            top: 34%;
         }
-
-        .left-eye  { left: 35%; transform: translateX(-50%); }
+        .left-eye { left: 35%; transform: translateX(-50%); }
         .right-eye { right: 35%; transform: translateX(50%); }
 
         .mouth {
@@ -87,94 +127,167 @@
             border: var(--line-thickness) solid black;
             border-color: transparent transparent black transparent;
             border-radius: 50%;
-            bottom: 25%;
+            bottom: 27%;
             right: 30%;
             transform: rotate(-45deg);
-            background-color: transparent;
+            background: transparent;
         }
 
-        @keyframes blink {
-            0%,45%,100% { height: var(--eye-height); }
-            50%,52%     { height: var(--line-thickness); }
+        #blynk-status {
+            margin-top: 16px;
+            font-size: 13px;
+            opacity: 0.7;
         }
-
-        @keyframes shake {
-            0% { transform: scale(1); }
-            50% { transform: scale(0.97); }
-            100% { transform: scale(1); }
-        }
-        
-        .click-shake { animation: shake 0.2s ease-in-out; }
     </style>
 </head>
 
 <body>
-    <div id="blynk-status">Blynk Status: Idle</div>
 
+    <!-- 顶部文字 -->
+    <div class="text-area">
+        <p id="line1" class="story-line"></p>
+        <p id="line2" class="story-line"></p>
+        <p id="line3" class="story-line"></p>
+    </div>
+
+    <!-- 圆形交互区 -->
     <div class="emoji-container" id="emojiContainer">
-        <div class="features-wrapper" id="featuresWrapper">
-            <div class="eye left-eye"></div>
-            <div class="eye right-eye"></div>
-            <div class="mouth"></div>
+        <div class="big-circle" id="bigCircle">
+            <div class="features-wrapper" id="featuresWrapper">
+                <div id="questionFace">
+                    <div class="question-arc"></div>
+                    <div class="question-stem"></div>
+                    <div class="question-dot"></div>
+                </div>
+                <div id="smileFace">
+                    <div class="eye left-eye"></div>
+                    <div class="eye right-eye"></div>
+                    <div class="mouth"></div>
+                </div>
+            </div>
         </div>
     </div>
 
+    <div id="blynk-status">Blynk Status: Idle</div>
+
 <script>
+/* =================== 文案 =================== */
 
-    /* 🌸 Pink Sticker => 发送 90° */
+const lines = [
+    ["Hi there!", "Thanks for stopping by 💗", ""],
+    ["This little pink circle", "is my way of saying hello.", ""],
+    ["Thanks!", "Hope you have a warm day 💗", ""]
+];
 
-    const AUTH_TOKEN   = 'OqSFS2EppKQRi0DYBOTFNEQgW7pljRjT';
-    const BLYNK_HOST   = 'blynk.cloud';
-    const VIRTUAL_PIN  = 'V1';
+let page = 0;
+const line1 = document.getElementById("line1");
+const line2 = document.getElementById("line2");
+const line3 = document.getElementById("line3");
 
-    const PICKUP_ANGLE = 90;   // 🌸🌸🌸 Pink 固定发送 90°
-    const RETURN_ANGLE = 0;
+function showPage(i) {
+    [line1, line2, line3].forEach(el => el.classList.remove("visible"));
 
-    const container = document.getElementById('emojiContainer');
-    const wrapper   = document.getElementById('featuresWrapper');
-    const root      = document.documentElement;
-    const statusEl  = document.getElementById('blynk-status');
+    setTimeout(() => {
+        line1.textContent = lines[i][0];
+        line2.textContent = lines[i][1];
+        line3.textContent = lines[i][2];
 
-    /* ===== Blynk 舵机触发函数（发送 90°） ===== */
-    async function sendCommand(value) {
-        const url_push  = `https://${BLYNK_HOST}/external/api/update?token=${AUTH_TOKEN}&${VIRTUAL_PIN}=${value}`;
-        const url_reset = `https://${BLYNK_HOST}/external/api/update?token=${AUTH_TOKEN}&${VIRTUAL_PIN}=${RETURN_ANGLE}`;
+        setTimeout(() => {
+            if (lines[i][0]) line1.classList.add("visible");
+            if (lines[i][1]) line2.classList.add("visible");
+            if (lines[i][2]) line3.classList.add("visible");
+        }, 30);
+    }, 20);
+}
 
-        statusEl.innerText = `Blynk Status: Sending ${value}°...`;
+/* =================== 互动动画 =================== */
 
-        try {
-            const res_push = await fetch(url_push);
-            if (!res_push.ok) {
-                statusEl.innerText = `Blynk Status: PUSH Failed`;
-                return;
-            }
+const container = document.getElementById("emojiContainer");
+const wrapper = document.getElementById("featuresWrapper");
+const questionFace = document.getElementById("questionFace");
+const smileFace = document.getElementById("smileFace");
 
-            const res_reset = await fetch(url_reset);
-            statusEl.innerText = res_reset.ok
-                ? `Blynk Status: 90° sent & reset to 0`
-                : `Blynk Status: Reset Failed`;
+const maxDistance = 30;
+const faceShift = 0.15;
 
-        } catch (e) {
-            statusEl.innerText = `Blynk Status: Network Error`;
-        }
+function handleMove(e) {
+    const x = e.clientX || (e.touches && e.touches[0].clientX);
+    const y = e.clientY || (e.touches && e.touches[0].clientY);
+
+    if (!x || !y) return;
+
+    const rect = container.getBoundingClientRect();
+    const cx = rect.left + rect.width / 2;
+    const cy = rect.top + rect.height / 2;
+
+    let dx = x - cx;
+    let dy = y - cy;
+    let dist = Math.sqrt(dx*dx + dy*dy);
+
+    if (dist > maxDistance) {
+        const r = maxDistance / dist;
+        dx *= r; dy *= r;
     }
 
-    /* ========== 点击逻辑（触发表情 + 舵机） ========== */
+    container.style.transform = `translate(${dx * -faceShift}px, ${dy * -faceShift}px)`;
+    wrapper.style.transform = `translate(${dx}px, ${dy}px)`;
+}
 
-    function handleClickEffect(e) {
-        e.preventDefault();
+function resetPos() {
+    container.style.transform = "translate(0,0)";
+    wrapper.style.transform = "translate(0,0)";
+}
 
-        container.classList.remove('click-shake');
-        void container.offsetWidth;
-        container.classList.add('click-shake');
+document.addEventListener("mousemove", handleMove);
+document.addEventListener("touchmove", handleMove);
+document.addEventListener("mouseup", resetPos);
+document.addEventListener("touchend", resetPos);
 
-        // ✨ 舵机动作 (90°)
-        sendCommand(PICKUP_ANGLE);
+/* =================== Blynk 控制 =================== */
+
+const AUTH_TOKEN = "OqSFS2EppKQRi0DYBOTFNEQgW7pljRjT";
+const HOST = "blynk.cloud";
+const PIN = "V1";
+
+/* 💗 Pink 发 90° */
+const PICKUP_ANGLE = 90;
+const RESET_ANGLE = 0;
+
+async function sendCommand(value) {
+    const status = document.getElementById("blynk-status");
+
+    const urlPush = `https://${HOST}/external/api/update?token=${AUTH_TOKEN}&${PIN}=${value}`;
+    const urlReset = `https://${HOST}/external/api/update?token=${AUTH_TOKEN}&${PIN}=${RESET_ANGLE}`;
+
+    status.textContent = `Sending ${value}° ...`;
+
+    try {
+        await fetch(urlPush);
+        status.textContent = `Sent ${value}°, resetting...`;
+        await fetch(urlReset);
+        status.textContent = `Done ✔`;
+    } catch {
+        status.textContent = `Error sending command`;
     }
+}
 
-    /* === 启动监听 === */
-    container.addEventListener('click', handleClickEffect);
-    container.addEventListener('touchstart', handleClickEffect, { passive:false });
+/* =================== 点击事件 =================== */
+
+container.addEventListener("click", async () => {
+    page++;
+    if (page > 2) page = 0;
+
+    showPage(page);
+
+    if (page === 2) {
+        questionFace.style.display = "none";
+        smileFace.style.display = "block";
+
+        await sendCommand(PICKUP_ANGLE);
+    }
+});
+
+showPage(0);
 
 </script>
 </body>
